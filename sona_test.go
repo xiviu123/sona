@@ -4,8 +4,10 @@ import (
 	"context"
 	"flag"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xiviu123/sona/lock"
 	"github.com/xiviu123/sona/test"
 )
 
@@ -37,4 +39,39 @@ func TestService(t *testing.T) {
 
 	test.RegisterExampleServiceServer(s.server, NewExampleServiceServer())
 	s.Start(":9090")
+}
+
+type RedisCfg struct {
+	host string
+	pwd  string
+}
+
+func (r *RedisCfg) Host() string {
+	return r.host
+}
+
+func (r *RedisCfg) Pwd() string {
+	return r.pwd
+}
+func TestLock(t *testing.T) {
+
+	cfg := &RedisCfg{
+		host: "localhost:6379",
+		pwd:  "",
+	}
+
+	remote := lock.NewRedisStorage(cfg)
+
+	lock, _ := remote.ObtainLock("lockkey", 10*time.Minute)
+
+	_, err := remote.ObtainLock("lockkey", 10*time.Minute)
+
+	assert.EqualError(t, err, err.Error())
+
+	defer func() {
+		if lock != nil {
+			_ = lock.Unlock()
+		}
+	}()
+
 }

@@ -3,6 +3,8 @@ module github.com/xiviu123/sona
 go 1.14
 
 require (
+	github.com/bsm/redislock v0.7.0
+	github.com/go-redis/redis/v8 v8.3.3
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/gorilla/handlers v1.5.1
