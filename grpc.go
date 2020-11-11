@@ -37,3 +37,7 @@ func (s *GRPCServer) Start(addr string) error {
 	reflection.Register(s.server)
 	return s.server.Serve(listenPort)
 }
+
+func (s *GRPCServer) Server() *grpc.Server {
+	return s.server
+}

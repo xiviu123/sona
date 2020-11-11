@@ -37,7 +37,7 @@ func NewExampleServiceServer() test.ExampleServiceServer {
 func TestService(t *testing.T) {
 	s := NewGRPCServer()
 
-	test.RegisterExampleServiceServer(s.server, NewExampleServiceServer())
+	test.RegisterExampleServiceServer(s.Server(), NewExampleServiceServer())
 	s.Start(":9090")
 }
 
