@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"github.com/xiviu123/sona/interceptor"
 	"google.golang.org/grpc"

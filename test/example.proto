@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package test;
 
-option go_package = "test;test";
+option go_package = ".;test";
 
 import "google/api/annotations.proto";
 

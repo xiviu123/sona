@@ -1,6 +1,10 @@
 gen:
-	protoc --proto_path=test --proto_path=third_party --go_out=plugins=grpc:. example.proto
-	protoc --proto_path=test --proto_path=third_party --grpc-gateway_out=logtostderr=true:./test example.proto
+	protoc \
+                -I test \
+                -I third_party \
+                --go_out=plugins=grpc,paths=source_relative:./test \
+                --grpc-gateway_out=paths=source_relative:./test \
+                test/example.proto
 
 test:
 	go test
