@@ -8,7 +8,6 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/handlers v1.5.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/rs/xid v1.3.0
 	github.com/sirupsen/logrus v1.8.1
