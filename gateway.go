@@ -80,6 +80,8 @@ func (s *Gateway) run(addr string) error {
 		// Set request_id to grpc metadata
 		runtime.WithMetadata(RequestIDAnnotator),
 		// runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: false, EmitDefaults: true}),
+		// runtime.WithForwardResponseOption(httpResponseModifier),
+		// runtime.WithErrorHandler(errorHandle),
 	)
 
 	if err := s.registerServiceHandlers(ctx, mux); err != nil {
