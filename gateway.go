@@ -17,12 +17,16 @@ import (
 type RegisterGatewayEndpoint func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error)
 
 type Gateway struct {
-	handlerMap map[*string]RegisterGatewayEndpoint
+	handlerMap    map[*string]RegisterGatewayEndpoint
+	optionsMap    []runtime.ServeMuxOption
+	domainOrigins []string
 }
 
 func NewGateway() *Gateway {
 	return &Gateway{
-		handlerMap: make(map[*string]RegisterGatewayEndpoint),
+		handlerMap:    make(map[*string]RegisterGatewayEndpoint),
+		optionsMap:    []runtime.ServeMuxOption{runtime.WithMetadata(RequestIDAnnotator)},
+		domainOrigins: []string{"*"},
 	}
 }
 
@@ -49,8 +53,20 @@ func grpcDialOptions() []grpc.DialOption {
 	return opts
 }
 
-func (s *Gateway) AddServiceHandle(endpoint *string, serviceHandle RegisterGatewayEndpoint) {
+func (s *Gateway) AddServiceHandle(endpoint *string, serviceHandle RegisterGatewayEndpoint) *Gateway {
 	s.handlerMap[endpoint] = serviceHandle
+
+	return s
+}
+
+func (s *Gateway) WithServeMuxOption(opt runtime.ServeMuxOption) *Gateway {
+	s.optionsMap = append(s.optionsMap, opt)
+	return s
+}
+
+func (s *Gateway) WithCORSOrigins(domains []string) *Gateway {
+	s.domainOrigins = domains
+	return s
 }
 
 func (s *Gateway) registerServiceHandlers(ctx context.Context, mux *runtime.ServeMux) error {
@@ -76,20 +92,14 @@ func (s *Gateway) run(addr string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	mux := runtime.NewServeMux(
-		// Set request_id to grpc metadata
-		runtime.WithMetadata(RequestIDAnnotator),
-		// runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: false, EmitDefaults: true}),
-		// runtime.WithForwardResponseOption(httpResponseModifier),
-		// runtime.WithErrorHandler(errorHandle),
-	)
+	mux := runtime.NewServeMux(s.optionsMap...)
 
 	if err := s.registerServiceHandlers(ctx, mux); err != nil {
 		return err
 	}
 
 	handler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedOrigins(s.domainOrigins),
 		handlers.AllowedMethods([]string{http.MethodPost, http.MethodGet, http.MethodPut, http.MethodDelete}),
 		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "Accept-Encoding", "Accept"}),
 	)(mux)
