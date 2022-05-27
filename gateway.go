@@ -17,16 +17,20 @@ import (
 type RegisterGatewayEndpoint func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error)
 
 type Gateway struct {
-	handlerMap    map[*string]RegisterGatewayEndpoint
-	optionsMap    []runtime.ServeMuxOption
-	domainOrigins []string
+	handlerMap        map[*string]RegisterGatewayEndpoint
+	optionsMap        []runtime.ServeMuxOption
+	domainOrigins     []string
+	gatewayMiddleware func(h http.Handler) http.Handler
 }
 
 func NewGateway() *Gateway {
 	return &Gateway{
-		handlerMap:    make(map[*string]RegisterGatewayEndpoint),
-		optionsMap:    []runtime.ServeMuxOption{runtime.WithMetadata(RequestIDAnnotator)},
-		domainOrigins: []string{"*"},
+		handlerMap: make(map[*string]RegisterGatewayEndpoint),
+		optionsMap: []runtime.ServeMuxOption{
+			runtime.WithMetadata(RequestIDAnnotator),
+		},
+		domainOrigins:     []string{"*"},
+		gatewayMiddleware: nil,
 	}
 }
 
@@ -56,6 +60,11 @@ func grpcDialOptions() []grpc.DialOption {
 func (s *Gateway) AddServiceHandle(endpoint *string, serviceHandle RegisterGatewayEndpoint) *Gateway {
 	s.handlerMap[endpoint] = serviceHandle
 
+	return s
+}
+
+func (s *Gateway) WithGatewayMidleware(f func(h http.Handler) http.Handler) *Gateway {
+	s.gatewayMiddleware = f
 	return s
 }
 
@@ -104,7 +113,12 @@ func (s *Gateway) run(addr string) error {
 		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "Accept-Encoding", "Accept"}),
 	)(mux)
 
+	hdl := handler
+	if s.gatewayMiddleware != nil {
+		hdl = s.gatewayMiddleware(handler)
+	}
+
 	fmt.Printf("http server started on %s\n", addr)
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	return http.ListenAndServe(addr, handler)
+	return http.ListenAndServe(addr, hdl)
 }
